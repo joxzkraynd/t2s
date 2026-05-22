@@ -50,9 +50,10 @@ export default async function Page({ params }: PageProps) {
             paths={[
               { label: "Home", href: "/app", visibility: 'tablet' },
               { label: "Studio", href: "/app/studio", visibility: 'desktop' },
-            ]}
+            ]} 
             currentLabel={project.title} 
           />
+
         </div>
         <Button>Export</Button>
       </header>

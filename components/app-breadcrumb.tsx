@@ -19,11 +19,12 @@ import {
 
 export interface BreadcrumbPath {
   label: string
-  href?: string
+  href: string
   /** 
-   * 'always' - Always visible
-   * 'tablet' - Hidden on mobile, shown on tablet+
-   * 'desktop' - Hidden on mobile/tablet, shown on desktop+
+   * 'always' - Selalu muncul di bar
+   * 'tablet' - Muncul di bar mulai layar tablet (sm)
+   * 'desktop' - Muncul di bar mulai layar desktop (md)
+   * Jika dikosongkan, hanya akan muncul di dropdown.
    */
   visibility?: 'always' | 'tablet' | 'desktop'
 }
@@ -34,75 +35,91 @@ interface AppBreadcrumbProps {
 }
 
 export function AppBreadcrumb({ paths, currentLabel }: AppBreadcrumbProps) {
-  // Items that will be included in the ellipsis dropdown (anything not 'always' visible)
-  const collapsibleItems = paths.filter(p => p.visibility !== 'always')
-
   const getVisibilityClass = (visibility?: string) => {
     switch (visibility) {
+      case 'always': return ""
       case 'tablet': return "hidden sm:block"
       case 'desktop': return "hidden md:block"
-      default: return ""
+      default: return "hidden"
     }
+  }
+
+  // Logika visibilitas ikon "..."
+  const getEllipsisVisibilityClass = () => {
+    if (paths.length === 0) return "hidden"
+    
+    // Cek apakah ada item yang "Hanya di Dropdown" atau tersembunyi di breakpoint tertentu
+    const hasHiddenOnDesktop = paths.some(p => !p.visibility)
+    const hasHiddenOnTablet = paths.some(p => !p.visibility || p.visibility === 'desktop')
+    const hasHiddenOnMobile = paths.some(p => p.visibility !== 'always')
+
+    let classes = "flex" // default visible
+    if (!hasHiddenOnMobile) classes += " hidden"
+    if (!hasHiddenOnTablet) classes += " sm:hidden"
+    if (!hasHiddenOnDesktop) classes += " md:hidden"
+    
+    return classes
   }
 
   return (
     <Breadcrumb aria-label="Breadcrumb navigation">
       <BreadcrumbList>
-        {/* Render paths */}
+        {/* Render Jalur Statis */}
         {paths.map((path) => (
-          <React.Fragment key={path.href || path.label}>
+          <React.Fragment key={path.href}>
             <BreadcrumbItem className={getVisibilityClass(path.visibility)}>
-              {path.href ? (
-                <BreadcrumbLink asChild>
-                  <Link href={path.href}>{path.label}</Link>
-                </BreadcrumbLink>
-              ) : (
-                <span>{path.label}</span>
-              )}
+              <BreadcrumbLink asChild>
+                <Link href={path.href}>{path.label}</Link>
+              </BreadcrumbLink>
             </BreadcrumbItem>
-            
-            {/* Separator matches item visibility */}
             <BreadcrumbSeparator className={getVisibilityClass(path.visibility)} />
           </React.Fragment>
         ))}
 
-        {/* Ellipsis Dropdown (Visible only if there's hidden items at current breakpoint) */}
-        {collapsibleItems.length > 0 && (
+        {/* Dropdown Ellipsis */}
+        {paths.length > 0 && (
           <>
-            <BreadcrumbItem className="md:hidden">
+            <BreadcrumbItem className={getEllipsisVisibilityClass()}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     size="icon" 
                     variant="ghost" 
                     className="h-8 w-8"
-                    aria-label="Show more paths"
                   >
                     <BreadcrumbEllipsis />
+                    <span className="sr-only">Buka menu navigasi</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {collapsibleItems.map((item) => (
+                <DropdownMenuContent align="start" className="w-48">
+                  {paths.map((item) => (
                     <DropdownMenuItem 
-                      key={item.label} 
+                      key={item.href} 
                       asChild
-                      // On tablet, we might want to hide items already shown in the bar
-                      className={item.visibility === 'tablet' ? "sm:hidden" : ""}
+                      className={
+                        item.visibility === 'always' 
+                          ? "hidden" 
+                          : item.visibility === 'tablet' 
+                            ? "sm:hidden" 
+                            : item.visibility === 'desktop' 
+                              ? "md:hidden" 
+                              : ""
+                      }
                     >
-                      <Link href={item.href || "#"}>{item.label}</Link>
+                      <Link href={item.href}>{item.label}</Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </BreadcrumbItem>
-            <BreadcrumbSeparator className="md:hidden" />
+            <BreadcrumbSeparator className={getEllipsisVisibilityClass()} />
           </>
         )}
 
-        {/* Current Page */}
+        {/* Halaman Aktif */}
         <BreadcrumbItem>
           <BreadcrumbPage 
-            className="max-w-[150px] truncate font-medium sm:max-w-[250px] md:max-w-none"
+            className="max-w-[140px] truncate font-semibold sm:max-w-[240px] md:max-w-none text-foreground"
             title={currentLabel}
           >
             {currentLabel}
