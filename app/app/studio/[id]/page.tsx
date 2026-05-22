@@ -12,37 +12,14 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+import { getProjectById } from "../_data/projects"
+
 // In a real app, you would fetch this from an API or database
 async function getProject(id: string) {
-  const projects: Record<string, string> = {
-    "1": "Project Alpha",
-    "2": "Project Beta",
-    "3": "Project Gamma",
-    "4": "Project Delta",
-    "5": "Project Epsilon",
-    "6": "Project Zeta",
-    "7": "Project Eta",
-    "8": "Project Theta",
-    "9": "Project Iota",
-    "10": "Project Kappa",
-    "11": "Project Lambda",
-    "12": "Project Mu",
-    "13": "Project Nu",
-    "14": "Project Xi",
-    "15": "Project Omicron",
-    "16": "Project Pi",
-    "17": "Project Rho",
-    "18": "Project Sigma",
-    "19": "Project Tau",
-    "20": "Project Upsilon",
-    "21": "Project Phi",
-    "22": "Project Chi",
-    "23": "Project Psi",
-    "24": "Project Omega",
-  }
+  const project = getProjectById(id)
   
   return {
-    title: projects[id] || "New Project",
+    title: project?.title || "New Project",
   }
 }
 
