@@ -81,6 +81,7 @@ export function StudioEditor() {
           <TabsList className="w-fit">
             <TabsTrigger value="text">Text</TabsTrigger>
             <TabsTrigger value="composer">Composer</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           <CollapsibleTrigger asChild>
             <Button 
@@ -164,6 +165,10 @@ export function StudioEditor() {
               Add speech block
             </Button>
           </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="flex flex-1 flex-col outline-none">
+          {/* History content will go here. Empty for now. */}
         </TabsContent>
       </Tabs>
     </section>
