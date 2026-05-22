@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton asChild isActive={pathname === item.url}>
                       <Link href={item.url}>
                         <item.icon />
-                        <span>{item.title}</span>
+                        {item.title}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
