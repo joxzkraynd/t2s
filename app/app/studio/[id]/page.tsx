@@ -3,7 +3,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Metadata } from "next"
-import { Mic, User } from "lucide-react"
+import { Mic, User, PanelRight } from "lucide-react"
 import {
   InputGroup,
   InputGroupAddon,
@@ -11,6 +11,11 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -65,7 +70,7 @@ export default async function Page({ params }: PageProps) {
         </div>
         <Button>Export</Button>
       </header>
-      <div className="flex flex-1 overflow-hidden">
+      <Collapsible defaultOpen className="flex flex-1 overflow-hidden">
         {/* Kolom Kiri (Editor + Controls) */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Section 1: Editor */}
@@ -74,10 +79,20 @@ export default async function Page({ params }: PageProps) {
             aria-label="Editor"
           >
             <Tabs defaultValue="text" className="flex h-full flex-col">
-              <TabsList className="w-fit">
-                <TabsTrigger value="text">Text</TabsTrigger>
-                <TabsTrigger value="composer">Composer</TabsTrigger>
-              </TabsList>
+              <div className="flex items-center justify-between">
+                <TabsList className="w-fit">
+                  <TabsTrigger value="text">Text</TabsTrigger>
+                  <TabsTrigger value="composer">Composer</TabsTrigger>
+                </TabsList>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                  >
+                    <PanelRight />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
 
               <TabsContent value="text" className="flex flex-1 flex-col outline-none">
                 <InputGroup className="flex-1">
@@ -134,13 +149,17 @@ export default async function Page({ params }: PageProps) {
         </div>
 
         {/* Settings/Config (Kanan) */}
-        <aside 
-          className="hidden w-80 border-l overflow-y-auto lg:block" 
-          aria-label="Project settings"
+        <CollapsibleContent 
+          className="hidden h-full border-l lg:data-[state=open]:block"
         >
-          {/* Konten Settings di sini */}
-        </aside>
-      </div>
+          <aside 
+            className="w-80 h-full overflow-y-auto" 
+            aria-label="Project settings"
+          >
+            {/* Konten Settings di sini */}
+          </aside>
+        </CollapsibleContent>
+      </Collapsible>
     </>
   )
 }
