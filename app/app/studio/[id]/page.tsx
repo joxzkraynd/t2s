@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { StudioClient } from "./studio-client"
+import { Editor } from "./_components/editor/Editor"
+import { Controls } from "./_components/layout/Controls"
+import { Sidebar } from "./_components/layout/Sidebar"
+import { Collapsible } from "@/components/ui/collapsible"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -75,7 +78,14 @@ export default async function Page({ params }: PageProps) {
         </div>
         <Button>Export</Button>
       </header>
-      <StudioClient />
+      
+      <Collapsible defaultOpen className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Editor />
+          <Controls />
+        </div>
+        <Sidebar />
+      </Collapsible>
     </div>
   )
 }

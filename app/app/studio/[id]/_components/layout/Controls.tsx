@@ -22,7 +22,11 @@ const formatTime = (timeInSeconds: number) => {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`
 }
 
-export function StudioControls() {
+/**
+ * Controls Component
+ * Provides playback, timeline, and generation controls for the studio.
+ */
+export function Controls() {
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [currentTime, setCurrentTime] = React.useState(0)
   const [isSeeking, setIsSeeking] = React.useState(false)
@@ -73,7 +77,7 @@ export function StudioControls() {
     handleGenerateRef.current = handleGenerate
   }, [handleGenerate])
 
-  // 4. Hybrid Keyboard Shortcuts (Space for global preview, Ctrl/Cmd + Space inside input, Ctrl/Cmd + Enter to Generate)
+  // 4. Hybrid Keyboard Shortcuts
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isSpace = event.code === "Space" || event.key === " " || event.key === "Spacebar"
