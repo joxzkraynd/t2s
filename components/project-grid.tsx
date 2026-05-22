@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/item"
 import { MoreHorizontalIcon, PencilIcon, Share2Icon, TrashIcon } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface Project {
   id: string
@@ -58,13 +59,14 @@ function ProjectItem({ project }: { project: Project }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const shareLink = `http://localhost:3000/app/studio/${project.id}`
 
-  useEffect(() => {
-    if (showShareDialog) {
-      navigator.clipboard.writeText(shareLink).catch((err) => {
-        console.error("Failed to copy link: ", err)
+  const handleShare = () => {
+    setShowShareDialog(true)
+    navigator.clipboard.writeText(shareLink).then(() => {
+      toast.success("Link copied", {
+        description: "The project link has been copied to your clipboard.",
       })
-    }
-  }, [showShareDialog, shareLink])
+    })
+  }
 
   return (
     <>
@@ -87,21 +89,11 @@ function ProjectItem({ project }: { project: Project }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => setShowShareDialog(true)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                >
+                <DropdownMenuItem onSelect={handleShare}>
                   <Share2Icon />
                   Share
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => setShowRenameDialog(true)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                >
+                <DropdownMenuItem onSelect={() => setShowRenameDialog(true)}>
                   <PencilIcon />
                   Rename
                 </DropdownMenuItem>
@@ -109,9 +101,6 @@ function ProjectItem({ project }: { project: Project }) {
                 <DropdownMenuItem
                   variant="destructive"
                   onSelect={() => setShowDeleteDialog(true)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
                 >
                   <TrashIcon />
                   Delete
@@ -131,7 +120,9 @@ function ProjectItem({ project }: { project: Project }) {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              console.log("Project renamed")
+              toast.success("Project renamed", {
+                description: `The project has been renamed to "${(e.currentTarget.elements.namedItem("name") as HTMLInputElement).value}".`,
+              })
               setShowRenameDialog(false)
             }}
           >
@@ -207,7 +198,13 @@ function ProjectItem({ project }: { project: Project }) {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                console.log("Project deleted")
+                toast.success("Project deleted", {
+                  description: `"${project.title}" has been removed.`,
+                  action: {
+                    label: "Undo",
+                    onClick: () => console.log("Undo delete"),
+                  },
+                })
                 setShowDeleteDialog(false)
               }}
             >
