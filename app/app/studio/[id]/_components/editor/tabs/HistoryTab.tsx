@@ -20,6 +20,7 @@ import {
   ItemGroup,
 } from "@/components/ui/item"
 import { TabsContent } from "@/components/ui/tabs"
+import { formatDistanceToNow } from "date-fns"
 import { mockHistoryData } from "../../../../_data/history"
 
 /**
@@ -37,7 +38,7 @@ export function HistoryTab() {
           <HistoryItem
             key={item.id}
             title={item.title}
-            description={item.description}
+            timestamp={item.timestamp}
           />
         ))}
       </ItemGroup>
@@ -51,16 +52,21 @@ export function HistoryTab() {
  */
 interface HistoryItemProps {
   title: string
-  description: string
+  timestamp: string
 }
 
-function HistoryItem({ title, description }: HistoryItemProps) {
+function HistoryItem({ title, timestamp }: HistoryItemProps) {
+  // Use date-fns for robust, standard relative time formatting
+  const relativeTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+
   return (
     <Item variant="outline">
       <ItemContent>
         <ItemTitle>{title}</ItemTitle>
         <ItemDescription className="line-clamp-1">
-          {description}
+          <time dateTime={timestamp} title={new Date(timestamp).toLocaleString()} suppressHydrationWarning>
+            {relativeTime}
+          </time>
         </ItemDescription>
       </ItemContent>
       
