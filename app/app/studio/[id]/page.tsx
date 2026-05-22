@@ -10,6 +10,7 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -69,27 +70,53 @@ export default async function Page({ params }: PageProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Section 1: Editor */}
           <section 
-            className="flex-1 p-4" 
+            className="flex flex-1 flex-col p-4" 
             aria-label="Editor"
           >
-            <div className="flex h-full w-full flex-col">
-              <InputGroup className="flex-1">
-                <InputGroupTextarea
-                  id="textarea-code-32"
-                  placeholder="Masukkan teks di sini..."
-                  className="h-full min-h-0 flex-1"
-                />
-                <InputGroupAddon align="block-start" className="border-b">
-                  <InputGroupButton variant="outline" size="sm" className="gap-2">
-                    <User />
-                    Speaker 1 - Zephyr
-                  </InputGroupButton>
-                  <InputGroupButton variant="outline" size="icon-sm" className="ml-auto">
-                    <Mic />
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
-            </div>
+            <Tabs defaultValue="text" className="flex h-full flex-col">
+              <TabsList className="w-fit">
+                <TabsTrigger value="text">Text</TabsTrigger>
+                <TabsTrigger value="composer">Composer</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="text" className="flex flex-1 flex-col outline-none">
+                <InputGroup className="flex-1">
+                  <InputGroupTextarea
+                    id="textarea-text"
+                    placeholder="Masukkan teks di sini..."
+                    className="h-full min-h-0 flex-1"
+                  />
+                  <InputGroupAddon align="block-start" className="border-b">
+                    <InputGroupButton variant="outline" size="sm">
+                      <User />
+                      Speaker 1 - Zephyr
+                    </InputGroupButton>
+                    <InputGroupButton variant="outline" size="icon-sm" className="ml-auto">
+                      <Mic />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </TabsContent>
+
+              <TabsContent value="composer" className="flex flex-1 flex-col outline-none">
+                <InputGroup className="flex-1">
+                  <InputGroupTextarea
+                    id="textarea-composer"
+                    placeholder="Masukkan teks di sini..."
+                    className="h-full min-h-0 flex-1"
+                  />
+                  <InputGroupAddon align="block-start" className="border-b">
+                    <InputGroupButton variant="outline" size="sm">
+                      <User />
+                      Speaker 1 - Zephyr
+                    </InputGroupButton>
+                    <InputGroupButton variant="outline" size="icon-sm" className="ml-auto">
+                      <Mic />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </TabsContent>
+            </Tabs>
           </section>
 
           {/* Section 2: Controls & Results */}
