@@ -71,18 +71,6 @@ export function StudioEditor() {
     setBlocks(blocks.map(block => block.id === id ? { ...block, text } : block))
   }
 
-  const toggleSpeaker = (id: string) => {
-    setBlocks(blocks.map(block => {
-      if (block.id === id) {
-        return {
-          ...block,
-          speaker: block.speaker === "Speaker 1 - Zephyr" ? "Speaker 2 - Puck" : "Speaker 1 - Zephyr"
-        }
-      }
-      return block
-    }))
-  }
-
   return (
     <section 
       className="flex flex-1 flex-col overflow-y-auto p-4 min-h-0 scroll-smooth" 
@@ -146,7 +134,6 @@ export function StudioEditor() {
                 <InputGroupButton 
                   variant="outline" 
                   size="sm"
-                  onClick={() => toggleSpeaker(block.id)}
                 >
                   <User />
                   {block.speaker}
