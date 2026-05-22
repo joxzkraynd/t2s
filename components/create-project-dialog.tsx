@@ -11,25 +11,51 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { PlusIcon } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { FieldError } from "@/components/ui/field"
+
+const createProjectSchema = z.object({
+  name: z.string().min(1, "Project name is required").trim(),
+})
+
+type CreateProjectValues = z.infer<typeof createProjectSchema>
 
 export function CreateProjectDialog() {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid, isDirty },
+  } = useForm<CreateProjectValues>({
+    resolver: zodResolver(createProjectSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+    },
+  })
+
+  const onSubmit = (data: CreateProjectValues) => {
+    // Add your project creation logic here
+    console.log("Project created", data.name)
+    reset()
+  }
+
   return (
-    <Dialog>
+    <Dialog
+      onOpenChange={(open) => {
+        if (!open) reset()
+      }}
+    >
       <DialogTrigger asChild>
         <Button>New Project</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            // Add your project creation logic here
-            console.log("Project created")
-          }}
-        >
+        <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Create Project</DialogTitle>
             <DialogDescription>
@@ -41,17 +67,19 @@ export function CreateProjectDialog() {
               <FieldLabel htmlFor="name">Project Name</FieldLabel>
               <Input
                 id="name"
-                name="name"
                 placeholder="e.g. My Awesome Podcast"
-                required
+                {...register("name")}
               />
+              <FieldError errors={[errors.name]} />
             </Field>
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit">Create Project</Button>
+            <Button type="submit" disabled={!isValid || !isDirty}>
+              Create Project
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

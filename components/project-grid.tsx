@@ -42,6 +42,10 @@ import {
 import { MoreHorizontalIcon, PencilIcon, Share2Icon, TrashIcon } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { FieldError } from "@/components/ui/field"
 
 interface Project {
   id: string
@@ -53,11 +57,35 @@ interface ProjectGridProps {
   projects: Project[]
 }
 
+const renameSchema = z.object({
+  name: z.string().min(1, "Name is required").trim(),
+})
+
+type RenameValues = z.infer<typeof renameSchema>
+
 function ProjectItem({ project }: { project: Project }) {
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [showShareDialog, setShowShareDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const shareLink = `http://localhost:3000/app/studio/${project.id}`
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<RenameValues>({
+    resolver: zodResolver(renameSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: project.title,
+    },
+  })
+
+  const currentName = watch("name")
+  const isNameUnchanged =
+    currentName.trim() === project.title || currentName.trim() === ""
 
   const handleShare = () => {
     setShowShareDialog(true)
@@ -66,6 +94,13 @@ function ProjectItem({ project }: { project: Project }) {
         description: "The project link has been copied to your clipboard.",
       })
     })
+  }
+
+  const onRename = (data: RenameValues) => {
+    toast.success("Project renamed", {
+      description: `The project has been renamed to "${data.name.trim()}".`,
+    })
+    setShowRenameDialog(false)
   }
 
   return (
@@ -112,20 +147,18 @@ function ProjectItem({ project }: { project: Project }) {
       </Item>
 
       {/* Rename Dialog */}
-      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+      <Dialog
+        open={showRenameDialog}
+        onOpenChange={(open) => {
+          setShowRenameDialog(open)
+          if (!open) reset({ name: project.title })
+        }}
+      >
         <DialogContent
           className="sm:max-w-md"
           onClick={(e) => e.stopPropagation()}
         >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              toast.success("Project renamed", {
-                description: `The project has been renamed to "${(e.currentTarget.elements.namedItem("name") as HTMLInputElement).value}".`,
-              })
-              setShowRenameDialog(false)
-            }}
-          >
+          <form onSubmit={handleSubmit(onRename)}>
             <DialogHeader>
               <DialogTitle>Rename Project</DialogTitle>
               <DialogDescription>
@@ -137,19 +170,17 @@ function ProjectItem({ project }: { project: Project }) {
                 <FieldLabel htmlFor={`rename-${project.id}`}>
                   Project Name
                 </FieldLabel>
-                <Input
-                  id={`rename-${project.id}`}
-                  name="name"
-                  defaultValue={project.title}
-                  required
-                />
+                <Input id={`rename-${project.id}`} {...register("name")} />
+                <FieldError errors={[errors.name]} />
               </Field>
             </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={!isValid || isNameUnchanged}>
+                Save changes
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
