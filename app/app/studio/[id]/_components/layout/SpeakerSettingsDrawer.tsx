@@ -45,6 +45,7 @@ interface SpeakerSettingsDrawerProps {
   setAccent: (val: string) => void
   voice: string
   setVoice: (val: string) => void
+  children?: React.ReactNode
 }
 
 export function SpeakerSettingsDrawer({
@@ -59,6 +60,7 @@ export function SpeakerSettingsDrawer({
   setAccent,
   voice,
   setVoice,
+  children,
 }: SpeakerSettingsDrawerProps) {
   // Convert standard ID strings safely for semantic htmlFor/id matching
   const inputIdPrefix = speakerName.toLowerCase().replace(/\s+/g, "-")
@@ -66,9 +68,13 @@ export function SpeakerSettingsDrawer({
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={`${speakerName} Settings`}>
-          <Settings2Icon />
-        </Button>
+        {children ? (
+          children
+        ) : (
+          <Button variant="outline" size="icon" aria-label={`${speakerName} Settings`}>
+            <Settings2Icon />
+          </Button>
+        )}
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>

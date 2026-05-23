@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/input-group"
 import { TabsContent } from "@/components/ui/tabs"
 import { useSpeaker, SpeechBlock } from "../../layout/SpeakerProvider"
+import { SpeakerSettingsDrawer } from "../../layout/SpeakerSettingsDrawer"
 
 export type { SpeechBlock }
 
@@ -20,7 +21,7 @@ export type { SpeechBlock }
  * Renders an interactive list of speech blocks that can be added or removed.
  */
 export function ComposerTab() {
-  const { blocks, setBlocks, speaker1, speaker2 } = useSpeaker()
+  const { blocks, setBlocks, speaker1, setSpeaker1, speaker2, setSpeaker2 } = useSpeaker()
 
   const [lastAddedId, setLastAddedId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -65,12 +66,6 @@ export function ComposerTab() {
     }
   }
 
-  const toggleSpeaker = (id: string) => {
-    setBlocks(blocks.map(block => block.id === id ? {
-      ...block,
-      speaker: block.speaker === "Speaker 1" ? "Speaker 2" : "Speaker 1"
-    } : block))
-  }
 
   const handleTextChange = (id: string, text: string) => {
     setBlocks(blocks.map(block => block.id === id ? { ...block, text } : block))
@@ -93,16 +88,45 @@ export function ComposerTab() {
             )}
           />
           <InputGroupAddon align="block-start" className="border-b">
-            <InputGroupButton 
-              variant="outline" 
-              size="sm"
-              onClick={() => toggleSpeaker(block.id)}
-            >
-              <User />
-              {block.speaker === "Speaker 1" 
-                ? `Speaker 1 - ${speaker1.voice}` 
-                : `Speaker 2 - ${speaker2.voice}`}
-            </InputGroupButton>
+            {block.speaker === "Speaker 1" ? (
+              <SpeakerSettingsDrawer
+                speakerName="Speaker 1"
+                audioProfile={speaker1.audioProfile}
+                setAudioProfile={(val) => setSpeaker1((prev) => ({ ...prev, audioProfile: val }))}
+                style={speaker1.style}
+                setStyle={(val) => setSpeaker1((prev) => ({ ...prev, style: val }))}
+                pace={speaker1.pace}
+                setPace={(val) => setSpeaker1((prev) => ({ ...prev, pace: val }))}
+                accent={speaker1.accent}
+                setAccent={(val) => setSpeaker1((prev) => ({ ...prev, accent: val }))}
+                voice={speaker1.voice}
+                setVoice={(val) => setSpeaker1((prev) => ({ ...prev, voice: val }))}
+              >
+                <InputGroupButton variant="outline" size="sm">
+                  <User />
+                  Speaker 1 - {speaker1.voice}
+                </InputGroupButton>
+              </SpeakerSettingsDrawer>
+            ) : (
+              <SpeakerSettingsDrawer
+                speakerName="Speaker 2"
+                audioProfile={speaker2.audioProfile}
+                setAudioProfile={(val) => setSpeaker2((prev) => ({ ...prev, audioProfile: val }))}
+                style={speaker2.style}
+                setStyle={(val) => setSpeaker2((prev) => ({ ...prev, style: val }))}
+                pace={speaker2.pace}
+                setPace={(val) => setSpeaker2((prev) => ({ ...prev, pace: val }))}
+                accent={speaker2.accent}
+                setAccent={(val) => setSpeaker2((prev) => ({ ...prev, accent: val }))}
+                voice={speaker2.voice}
+                setVoice={(val) => setSpeaker2((prev) => ({ ...prev, voice: val }))}
+              >
+                <InputGroupButton variant="outline" size="sm">
+                  <User />
+                  Speaker 2 - {speaker2.voice}
+                </InputGroupButton>
+              </SpeakerSettingsDrawer>
+            )}
             <InputGroupButton 
               variant="outline" 
               size="icon-sm" 
