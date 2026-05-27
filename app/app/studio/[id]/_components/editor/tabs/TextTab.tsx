@@ -104,7 +104,6 @@ export function TextTab() {
           ref={textareaRef}
           defaultValue={blocksToText(blocks)}
           onChange={handleChange}
-          disabled={isGenerating}
         />
         <AudioTagAutocomplete textareaRef={textareaRef} />
         <InputGroupAddon align="block-start" className="border-b">

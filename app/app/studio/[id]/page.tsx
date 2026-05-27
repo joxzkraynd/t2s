@@ -1,5 +1,4 @@
 import { Metadata } from "next"
-import { Button } from "@/components/ui/button"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -9,6 +8,7 @@ import { Sidebar } from "./_components/layout/Sidebar"
 import { Collapsible } from "@/components/ui/collapsible"
 import { getProjectById } from "@/data/projects"
 import { SpeakerProvider } from "./_components/layout/SpeakerProvider"
+import { ExportButton } from "./_components/layout/ExportButton"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -37,26 +37,26 @@ export default async function Page({ params }: PageProps) {
   const project = await getProject(id)
 
   return (
-    <div className="flex h-svh w-full flex-col overflow-hidden">
-      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-vertical:h-4 data-vertical:self-auto"
-          />
-          <AppBreadcrumb 
-            paths={[
-              { label: "Home", href: "/app", visibility: 'tablet' },
-              { label: "Studio", href: "/app/studio", visibility: 'desktop' },
-            ]} 
-            currentLabel={project.title} 
-          />
-        </div>
-        <Button>Export</Button>
-      </header>
-      
-      <SpeakerProvider>
+    <SpeakerProvider>
+      <div className="flex h-svh w-full flex-col overflow-hidden">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+            />
+            <AppBreadcrumb 
+              paths={[
+                { label: "Home", href: "/app", visibility: 'tablet' },
+                { label: "Studio", href: "/app/studio", visibility: 'desktop' },
+              ]} 
+              currentLabel={project.title} 
+            />
+          </div>
+          <ExportButton />
+        </header>
+        
         <Collapsible defaultOpen className="flex flex-1 overflow-hidden">
           <div className="flex flex-1 flex-col overflow-hidden">
             <Editor />
@@ -64,7 +64,7 @@ export default async function Page({ params }: PageProps) {
           </div>
           <Sidebar />
         </Collapsible>
-      </SpeakerProvider>
-    </div>
+      </div>
+    </SpeakerProvider>
   )
 }

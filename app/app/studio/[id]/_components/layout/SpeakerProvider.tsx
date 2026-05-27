@@ -59,6 +59,10 @@ interface SpeakerState {
   // History Tab States
   historyList: HistoryItem[]
   setHistoryList: Dispatch<SetStateAction<HistoryItem[]>>
+
+  // Active Tab States
+  activeTab: string
+  setActiveTab: (val: string) => void
 }
 
 const SpeakerContext = createContext<SpeakerState | null>(null)
@@ -102,6 +106,7 @@ export function SpeakerProvider({ children }: { children: React.ReactNode }) {
   // Generation & History States
   const [isGenerating, setIsGenerating] = useState(false)
   const [historyList, setHistoryList] = useState<HistoryItem[]>([])
+  const [activeTab, setActiveTab] = useState("text")
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -281,6 +286,10 @@ export function SpeakerProvider({ children }: { children: React.ReactNode }) {
         // History list
         historyList,
         setHistoryList,
+
+        // Active Tab
+        activeTab,
+        setActiveTab,
       }}
     >
       {children}

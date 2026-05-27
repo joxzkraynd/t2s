@@ -39,6 +39,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 import { useSpeaker, HistoryItem as HistoryItemType } from "../../layout/SpeakerProvider"
@@ -48,24 +49,33 @@ import { useSpeaker, HistoryItem as HistoryItemType } from "../../layout/Speaker
  * Renders a list of historical speech generations.
  */
 export function HistoryTab() {
-  const { historyList } = useSpeaker()
+  const { historyList, setActiveTab } = useSpeaker()
 
   return (
     <TabsContent 
       value="history" 
-      className="flex flex-1 flex-col outline-none gap-4 pb-4"
+      className="flex flex-1 flex-col outline-none"
     >
       {historyList.length === 0 ? (
-        <Empty className="border border-dashed p-4 flex-none justify-start">
+        <Empty className="border border-dashed p-4">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <History />
             </EmptyMedia>
-            <EmptyTitle>No history items found</EmptyTitle>
+            <EmptyTitle>History is Empty</EmptyTitle>
             <EmptyDescription>
-              Generate speech audio to see it appear here.
+              Generate speech audio to see your creations appear here.
             </EmptyDescription>
           </EmptyHeader>
+          <EmptyContent>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setActiveTab("text")}
+            >
+              Create Speech
+            </Button>
+          </EmptyContent>
         </Empty>
       ) : (
         <ItemGroup>

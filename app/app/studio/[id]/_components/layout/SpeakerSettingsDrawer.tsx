@@ -76,17 +76,17 @@ export function SpeakerSettingsDrawer({
           </Button>
         )}
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="h-full">
         <DrawerHeader>
           <DrawerTitle>{speakerName} Settings</DrawerTitle>
-          <DrawerDescription>Configure the speech generation settings for {speakerName}.</DrawerDescription>
+          <DrawerDescription>Configure voice characteristics, style parameters, and foundations for this speaker.</DrawerDescription>
         </DrawerHeader>
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar">
           <FieldGroup>
             {/* Section 1: Audio Profile */}
             <FieldSet>
-              <FieldLegend>Settings</FieldLegend>
-              <FieldDescription>Configure the speech generation settings for {speakerName}.</FieldDescription>
+              <FieldLegend>Voice Profile</FieldLegend>
+              <FieldDescription>Describe the personality, tone, or character of the voice.</FieldDescription>
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor={`${inputIdPrefix}-audio-profile`}>Audio Profile</FieldLabel>
@@ -104,8 +104,8 @@ export function SpeakerSettingsDrawer({
 
             {/* Section 2: Style, Pace, Accent */}
             <FieldSet>
-              <FieldLegend>Advanced Settings</FieldLegend>
-              <FieldDescription>Speech-to-speech prompting directives for {speakerName}.</FieldDescription>
+              <FieldLegend>Speech Directives</FieldLegend>
+              <FieldDescription>Provide advanced stylistic cues to guide the speech generator's pacing, accent, and style.</FieldDescription>
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor={`${inputIdPrefix}-style`}>Style</FieldLabel>
@@ -113,7 +113,7 @@ export function SpeakerSettingsDrawer({
                     id={`${inputIdPrefix}-style`}
                     value={style}
                     onChange={(e) => setStyle(e.target.value)}
-                    placeholder="e.g., whispering, excited, gravelly"
+                    placeholder="e.g., whisper, excited, gravelly"
                   />
                 </Field>
                 <Field>
@@ -122,7 +122,7 @@ export function SpeakerSettingsDrawer({
                     id={`${inputIdPrefix}-pace`}
                     value={pace}
                     onChange={(e) => setPace(e.target.value)}
-                    placeholder="e.g., very fast, painfully slow"
+                    placeholder="e.g., natural, slightly fast, relaxed"
                   />
                 </Field>
                 <Field>
@@ -131,7 +131,7 @@ export function SpeakerSettingsDrawer({
                     id={`${inputIdPrefix}-accent`}
                     value={accent}
                     onChange={(e) => setAccent(e.target.value)}
-                    placeholder="e.g., British accent, heavy French drawl"
+                    placeholder="e.g., British, heavy French drawl"
                   />
                 </Field>
               </FieldGroup>
@@ -141,8 +141,8 @@ export function SpeakerSettingsDrawer({
 
             {/* Section 3: Voice Selection */}
             <FieldSet>
-              <FieldLegend>Voice Selection</FieldLegend>
-              <FieldDescription>Select the prebuilt output voice for {speakerName}.</FieldDescription>
+              <FieldLegend>Base Voice</FieldLegend>
+              <FieldDescription>Select the prebuilt voice template as the foundation for this speaker.</FieldDescription>
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor={`${inputIdPrefix}-voice`}>Voice</FieldLabel>
