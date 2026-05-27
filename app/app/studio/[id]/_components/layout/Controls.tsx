@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Play, Pause } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -12,10 +13,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-const DURATION = 154
+import { useSpeaker } from "./SpeakerProvider"
 
 const formatTime = (timeInSeconds: number) => {
+  if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) return "0:00"
   const minutes = Math.floor(timeInSeconds / 60)
   const seconds = Math.floor(timeInSeconds % 60)
 
@@ -24,52 +25,35 @@ const formatTime = (timeInSeconds: number) => {
 
 /**
  * Controls Component
- * Provides playback, timeline, and generation controls for the studio.
+ * Provides playback, timeline, and generation controls for the studio,
+ * linked directly to the unified Audio playback provider.
  */
 export function Controls() {
-  const [isPlaying, setIsPlaying] = React.useState(false)
-  const [currentTime, setCurrentTime] = React.useState(0)
+  const {
+    isPlaying,
+    setIsPlaying,
+    currentTime,
+    duration,
+    handleSeek,
+    isGenerating,
+    generateAudio,
+    blocks,
+  } = useSpeaker()
+
   const [isSeeking, setIsSeeking] = React.useState(false)
   const [seekValue, setSeekValue] = React.useState(0)
-  const [isGenerating, setIsGenerating] = React.useState(false)
+  const hasText = blocks.some(b => b.text.trim().length > 0)
 
-  // 1. Playback Timer Interval (Suspended during Seeking for robust State Sync)
-  React.useEffect(() => {
-    if (!isPlaying || isSeeking) return
+  // Audio Generation Action
+  const handleGenerate = React.useCallback(async () => {
+    if (isGenerating) return
 
-    const interval: ReturnType<typeof setInterval> =
-      setInterval(() => {
-        setCurrentTime((prev) => prev + 1)
-      }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isPlaying, isSeeking])
-
-  // 2. Playback Completion & Bounds Check
-  React.useEffect(() => {
-    if (currentTime >= DURATION) {
-      setIsPlaying(false)
-      setCurrentTime(0)
+    try {
+      await generateAudio()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Generation failed")
     }
-  }, [currentTime])
-
-  // 3. Audio Generation Action
-  const handleGenerate = React.useCallback(() => {
-    setIsGenerating((prev) => {
-      if (prev) return prev
-
-      const promise = new Promise((resolve) => setTimeout(resolve, 2000))
-      promise
-        .then(() => {
-          setIsGenerating(false)
-        })
-        .catch(() => {
-          setIsGenerating(false)
-        })
-
-      return true
-    })
-  }, [])
+  }, [isGenerating, generateAudio])
 
   // Keep a ref to handleGenerate to avoid stale event listener closures on Mount
   const handleGenerateRef = React.useRef(handleGenerate)
@@ -77,7 +61,7 @@ export function Controls() {
     handleGenerateRef.current = handleGenerate
   }, [handleGenerate])
 
-  // 4. Hybrid Keyboard Shortcuts
+  // Hybrid Keyboard Shortcuts
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isSpace = event.code === "Space" || event.key === " " || event.key === "Spacebar"
@@ -97,7 +81,7 @@ export function Controls() {
       if (isCtrlOrCmdSpace) {
         event.preventDefault()
         event.stopPropagation()
-        setIsPlaying((prev) => !prev)
+        setIsPlaying(!isPlaying)
         return
       }
 
@@ -113,14 +97,14 @@ export function Controls() {
         }
         event.preventDefault()
         event.stopPropagation()
-        setIsPlaying((prev) => !prev)
+        setIsPlaying(!isPlaying)
       }
     }
 
     // Register with capturing phase (true) to intercept keyboard events before textarea can consume them
     window.addEventListener("keydown", handleKeyDown, true)
     return () => window.removeEventListener("keydown", handleKeyDown, true)
-  }, [])
+  }, [isPlaying, setIsPlaying])
 
   return (
     <section
@@ -134,7 +118,7 @@ export function Controls() {
               variant="ghost"
               size="icon"
               onClick={() =>
-                setIsPlaying((prev) => !prev)
+                setIsPlaying(!isPlaying)
               }
               aria-label={
                 isPlaying ? "Pause audio" : "Play audio"
@@ -156,35 +140,35 @@ export function Controls() {
           </TooltipContent>
         </Tooltip>
 
-        <span className="text-sm tabular-nums text-muted-foreground">
+        <span className="text-sm tabular-nums text-muted-foreground min-w-[32px]">
           {formatTime(isSeeking ? seekValue : currentTime)}
         </span>
 
         <Slider
-          className="flex-1"
+          className="flex-1 cursor-pointer"
           aria-label="Playback progress timeline"
           value={[isSeeking ? seekValue : currentTime]}
-          max={DURATION}
-          step={1}
+          max={duration || 100} // Fallback to 100 during init
+          step={0.1}
           onValueChange={(value) => {
             setIsSeeking(true)
             setSeekValue(value[0] ?? 0)
           }}
           onValueCommit={(value) => {
-            setCurrentTime(value[0] ?? 0)
+            handleSeek(value[0] ?? 0)
             setIsSeeking(false)
           }}
         />
 
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {formatTime(DURATION)}
+        <span className="text-sm tabular-nums text-muted-foreground min-w-[32px]">
+          {formatTime(duration)}
         </span>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || !hasText}
             >
               {isGenerating ? (
                 <>

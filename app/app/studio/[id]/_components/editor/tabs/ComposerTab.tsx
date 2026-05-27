@@ -13,6 +13,7 @@ import {
 import { TabsContent } from "@/components/ui/tabs"
 import { useSpeaker, SpeechBlock } from "../../layout/SpeakerProvider"
 import { SpeakerSettingsDrawer } from "../../layout/SpeakerSettingsDrawer"
+import { AudioTagAutocomplete } from "@/components/ui/audio-tag-autocomplete"
 
 export type { SpeechBlock }
 
@@ -21,7 +22,7 @@ export type { SpeechBlock }
  * Renders an interactive list of speech blocks that can be added or removed.
  */
 export function ComposerTab() {
-  const { blocks, setBlocks, speaker1, setSpeaker1, speaker2, setSpeaker2 } = useSpeaker()
+  const { blocks, setBlocks, speaker1, setSpeaker1, speaker2, setSpeaker2, isGenerating } = useSpeaker()
 
   const [lastAddedId, setLastAddedId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -82,11 +83,13 @@ export function ComposerTab() {
             minRows={3}
             value={block.text}
             onChange={(e) => handleTextChange(block.id, e.target.value)}
+            disabled={isGenerating}
             className={cn(
               "flex w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
               "resize-none rounded-none border-0 bg-transparent py-2 shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent"
             )}
           />
+          <AudioTagAutocomplete textareaId={`textarea-composer-${block.id}`} />
           <InputGroupAddon align="block-start" className="border-b">
             {block.speaker === "Speaker 1" ? (
               <SpeakerSettingsDrawer

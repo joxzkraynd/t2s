@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState, use, Dispatch, SetStateAction } from "react"
+import { createContext, useState, useEffect, useRef, use, Dispatch, SetStateAction } from "react"
 
 export interface Speaker {
   audioProfile: string
@@ -14,6 +14,13 @@ export interface SpeechBlock {
   id: string
   text: string
   speaker: "Speaker 1" | "Speaker 2"
+}
+
+export interface HistoryItem {
+  id: string | number
+  title: string
+  timestamp: string
+  audioUrl?: string
 }
 
 interface SpeakerState {
@@ -33,15 +40,33 @@ interface SpeakerState {
   setBlocks: Dispatch<SetStateAction<SpeechBlock[]>>
   
   handleReset: () => void
+
+  // Audio Playback Engine States
+  audioUrl: string | null
+  setAudioUrl: (val: string | null) => void
+  isPlaying: boolean
+  setIsPlaying: (val: boolean) => void
+  currentTime: number
+  setCurrentTime: (val: number) => void
+  duration: number
+  setDuration: (val: number) => void
+  handleSeek: (val: number) => void
+
+  // Generation States & Handlers
+  isGenerating: boolean
+  generateAudio: () => Promise<any>
+
+  // History Tab States
+  historyList: HistoryItem[]
+  setHistoryList: Dispatch<SetStateAction<HistoryItem[]>>
 }
 
 const SpeakerContext = createContext<SpeakerState | null>(null)
 
 /**
  * SpeakerProvider
- * A central React Context Provider managing studio state (Model, Scene, Sample Context,
- * Speaker Configurations, and active Composer Speech Blocks) to establish direct,
- * efficient, and reactive communication between the Sidebar and Editor Tabs.
+ * A central React Context Provider managing studio state, unified HTML5 Audio playback,
+ * background API generation tasks, and history item lifecycle events.
  */
 export function SpeakerProvider({ children }: { children: React.ReactNode }) {
   const [model, setModel] = useState("gemini-3.1-flash-tts-preview")
@@ -68,6 +93,132 @@ export function SpeakerProvider({ children }: { children: React.ReactNode }) {
     { id: "block-1", text: "", speaker: "Speaker 1" }
   ])
 
+  // Audio Playback Engine States
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+
+  // Generation & History States
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [historyList, setHistoryList] = useState<HistoryItem[]>([])
+
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // 1. Initialize client-side Audio element
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const audio = new Audio()
+    audioRef.current = audio
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime)
+    }
+
+    const onDurationChange = () => {
+      setDuration(audio.duration || 0)
+    }
+
+    const onEnded = () => {
+      setIsPlaying(false)
+      setCurrentTime(0)
+    }
+
+    audio.addEventListener("timeupdate", onTimeUpdate)
+    audio.addEventListener("durationchange", onDurationChange)
+    audio.addEventListener("ended", onEnded)
+
+    return () => {
+      audio.removeEventListener("timeupdate", onTimeUpdate)
+      audio.removeEventListener("durationchange", onDurationChange)
+      audio.removeEventListener("ended", onEnded)
+      audio.pause()
+    }
+  }, [])
+
+  // 2. Sync audioUrl & isPlaying to Audio instance
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (!audioUrl) {
+      audio.removeAttribute("src")
+      setIsPlaying(false)
+      setCurrentTime(0)
+      setDuration(0)
+      return
+    }
+
+    if (audio.src !== audioUrl) {
+      audio.src = audioUrl
+    }
+
+    if (isPlaying) {
+      audio.play().catch((err) => {
+        console.error("Audio playback error:", err)
+        setIsPlaying(false)
+      })
+    } else {
+      audio.pause()
+    }
+  }, [isPlaying, audioUrl])
+
+  // 4. Handle user scrubbing/seeking
+  const handleSeek = (newTime: number) => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = newTime
+    setCurrentTime(newTime)
+  }
+
+  // 5. Invoke Vertex AI TTS dynamic endpoint
+  const generateAudio = async () => {
+    if (isGenerating) return
+    setIsGenerating(true)
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          blocks,
+          speaker1,
+          speaker2,
+          scene,
+          sampleContext,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Audio speech synthesis failed.")
+      }
+
+      // Add to dynamic history
+      const newHistoryItem: HistoryItem = {
+        id: `gen-${Date.now()}`,
+        title: data.title || "Generated speech",
+        timestamp: new Date().toISOString(),
+        audioUrl: data.audioUrl,
+      }
+
+      setHistoryList((prev) => [newHistoryItem, ...prev])
+
+      // Auto-load and play
+      setAudioUrl(data.audioUrl)
+      setIsPlaying(true)
+
+      return data
+    } catch (err: any) {
+      console.error("[SpeakerProvider] generateAudio error:", err)
+      throw err
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   const handleReset = () => {
     setModel("gemini-3.1-flash-tts-preview")
     setScene("")
@@ -89,6 +240,10 @@ export function SpeakerProvider({ children }: { children: React.ReactNode }) {
     setBlocks([
       { id: "block-1", text: "", speaker: "Speaker 1" }
     ])
+    setAudioUrl(null)
+    setIsPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
   }
 
   return (
@@ -107,6 +262,25 @@ export function SpeakerProvider({ children }: { children: React.ReactNode }) {
         blocks,
         setBlocks,
         handleReset,
+
+        // Audio Playback
+        audioUrl,
+        setAudioUrl,
+        isPlaying,
+        setIsPlaying,
+        currentTime,
+        setCurrentTime,
+        duration,
+        setDuration,
+        handleSeek,
+
+        // Generation
+        isGenerating,
+        generateAudio,
+
+        // History list
+        historyList,
+        setHistoryList,
       }}
     >
       {children}
@@ -125,3 +299,4 @@ export function useSpeaker() {
   }
   return context
 }
+

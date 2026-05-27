@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useEffect } from "react"
 import { User, Mic } from "lucide-react"
 import {
   InputGroup,
@@ -8,15 +9,90 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group"
 import { TabsContent } from "@/components/ui/tabs"
-import { useSpeaker } from "../../layout/SpeakerProvider"
+import { useSpeaker, SpeechBlock } from "../../layout/SpeakerProvider"
 import { SpeakerSettingsDrawer } from "../../layout/SpeakerSettingsDrawer"
+import { AudioTagAutocomplete } from "@/components/ui/audio-tag-autocomplete"
 
-/**
- * TextTab Component
- * Renders the simplified text editor view.
- */
+function blocksToText(blocks: SpeechBlock[]): string {
+  const onlySpeaker1 = blocks.every(b => b.speaker === "Speaker 1")
+  if (onlySpeaker1) {
+    return blocks.map(b => b.text).join("\n")
+  }
+  return blocks.map(b => `${b.speaker}: ${b.text}`).join("\n")
+}
+
+function textToBlocks(text: string): SpeechBlock[] {
+  if (!text.trim()) {
+    return [{ id: "block-text-1", speaker: "Speaker 1", text: "" }]
+  }
+
+  const lines = text.split("\n")
+  const result: SpeechBlock[] = []
+  let currentSpeaker: "Speaker 1" | "Speaker 2" = "Speaker 1"
+  let currentText: string[] = []
+  let hasPendingSpeaker = false
+
+  for (const line of lines) {
+    const match = line.match(/^(Speaker [12]):\s*(.*)$/)
+    if (match) {
+      if (currentText.length > 0 || hasPendingSpeaker) {
+        result.push({
+          id: `block-text-${result.length}`,
+          speaker: currentSpeaker,
+          text: currentText.join("\n"),
+        })
+        currentText = []
+      }
+      currentSpeaker = match[1] as "Speaker 1" | "Speaker 2"
+      hasPendingSpeaker = true
+      if (match[2]) {
+        currentText.push(match[2])
+      }
+    } else {
+      currentText.push(line)
+    }
+  }
+
+  result.push({
+    id: `block-text-${result.length}`,
+    speaker: currentSpeaker,
+    text: currentText.join("\n"),
+  })
+
+  return result
+}
+
 export function TextTab() {
-  const { speaker1, setSpeaker1 } = useSpeaker()
+  const { blocks, setBlocks, speaker1, setSpeaker1, isGenerating } = useSpeaker()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isInternalUpdate = useRef(false)
+
+  useEffect(() => {
+    textareaRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!isInternalUpdate.current && textareaRef.current) {
+      textareaRef.current.value = blocksToText(blocks)
+    }
+    isInternalUpdate.current = false
+  }, [blocks])
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value
+    isInternalUpdate.current = true
+
+    if (text.trim()) {
+      const newBlocks = textToBlocks(text)
+      const mergedBlocks = newBlocks.map((nb, i) => ({
+        ...nb,
+        id: blocks[i]?.id || nb.id,
+      }))
+      setBlocks(mergedBlocks)
+    } else {
+      setBlocks([{ id: "block-text-1", speaker: "Speaker 1", text: "" }])
+    }
+  }
 
   return (
     <TabsContent value="text" className="flex flex-1 flex-col outline-none">
@@ -25,7 +101,12 @@ export function TextTab() {
           id="textarea-text"
           placeholder="Enter your script here..."
           className="h-full min-h-0 flex-1"
+          ref={textareaRef}
+          defaultValue={blocksToText(blocks)}
+          onChange={handleChange}
+          disabled={isGenerating}
         />
+        <AudioTagAutocomplete textareaRef={textareaRef} />
         <InputGroupAddon align="block-start" className="border-b">
           <SpeakerSettingsDrawer
             speakerName="Speaker 1"

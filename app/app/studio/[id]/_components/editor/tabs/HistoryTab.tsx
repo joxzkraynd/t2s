@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDownIcon, DownloadIcon, TrashIcon } from "lucide-react"
+import { ChevronDownIcon, DownloadIcon, TrashIcon, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -31,54 +31,132 @@ import {
   ItemGroup,
 } from "@/components/ui/item"
 import { TabsContent } from "@/components/ui/tabs"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
-import { mockHistoryData } from "@/data/history"
+import { useSpeaker, HistoryItem as HistoryItemType } from "../../layout/SpeakerProvider"
 
 /**
  * HistoryTab Component
- * Renders a list of historical actions using shadcn Item components.
+ * Renders a list of historical speech generations.
  */
 export function HistoryTab() {
+  const { historyList } = useSpeaker()
+
   return (
     <TabsContent 
       value="history" 
       className="flex flex-1 flex-col outline-none gap-4 pb-4"
     >
-      <ItemGroup>
-        {mockHistoryData.map((item) => (
-          <HistoryItem
-            key={item.id}
-            title={item.title}
-            timestamp={item.timestamp}
-          />
-        ))}
-      </ItemGroup>
+      {historyList.length === 0 ? (
+        <Empty className="border border-dashed p-4 flex-none justify-start">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <History />
+            </EmptyMedia>
+            <EmptyTitle>No history items found</EmptyTitle>
+            <EmptyDescription>
+              Generate speech audio to see it appear here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <ItemGroup>
+          {historyList.map((item) => (
+            <HistoryItem
+              key={item.id}
+              item={item}
+            />
+          ))}
+        </ItemGroup>
+      )}
     </TabsContent>
   )
 }
 
 /**
  * HistoryItem Component
- * Encapsulates the layout for a single history entry, including actions.
+ * Encapsulates the layout and playback control for a single history entry.
  */
 interface HistoryItemProps {
-  title: string
-  timestamp: string
+  item: HistoryItemType
 }
 
-function HistoryItem({ title, timestamp }: HistoryItemProps) {
+function HistoryItem({ item }: HistoryItemProps) {
+  const { 
+    audioUrl, 
+    setAudioUrl, 
+    isPlaying: globalIsPlaying, 
+    setIsPlaying, 
+    setHistoryList 
+  } = useSpeaker()
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  // Use date-fns for robust, standard relative time formatting
-  const relativeTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+  
+  // Check if this history track is currently loaded and playing
+  const isActive = audioUrl === item.audioUrl && item.audioUrl !== undefined
+  const isPlaying = isActive && globalIsPlaying
+
+  const relativeTime = formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })
+
+  const handlePlayToggle = () => {
+    if (!item.audioUrl) {
+      toast.info(`Simulating mock track: "${item.title}" (no actual audio generated).`)
+      return
+    }
+
+    if (isActive) {
+      setIsPlaying(!globalIsPlaying)
+    } else {
+      setAudioUrl(item.audioUrl)
+      setIsPlaying(true)
+    }
+  }
+
+  const handleDownload = () => {
+    if (!item.audioUrl) {
+      toast.error("Mock tracks cannot be downloaded.")
+      return
+    }
+
+    try {
+      const link = document.createElement("a")
+      link.href = item.audioUrl
+      link.download = `t2s-${item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.wav`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success("Download started successfully!")
+    } catch (err) {
+      toast.error("Failed to download audio file.")
+    }
+  }
+
+  const handleDelete = () => {
+    setHistoryList((prev) => prev.filter((h) => h.id !== item.id))
+    if (isActive) {
+      setAudioUrl(null)
+    }
+    toast.success("History item deleted", {
+      description: `"${item.title}" has been removed.`,
+    })
+    setShowDeleteDialog(false)
+  }
 
   return (
     <>
       <Item variant="outline">
         <ItemContent>
-          <ItemTitle>{title}</ItemTitle>
+          <ItemTitle className="font-medium">{item.title}</ItemTitle>
           <ItemDescription className="line-clamp-1">
-            <time dateTime={timestamp} title={new Date(timestamp).toLocaleString()} suppressHydrationWarning>
+            <time dateTime={item.timestamp} title={new Date(item.timestamp).toLocaleString()} suppressHydrationWarning>
               {relativeTime}
             </time>
           </ItemDescription>
@@ -86,12 +164,10 @@ function HistoryItem({ title, timestamp }: HistoryItemProps) {
         
         <ItemActions>
           <ButtonGroup>
-            {/* Main Action */}
-            <Button variant="outline">
-              Play
+            <Button variant="outline" onClick={handlePlayToggle}>
+              {isPlaying ? "Pause" : "Play"}
             </Button>
             
-            {/* Secondary Actions Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" aria-label="More Options">
@@ -100,7 +176,7 @@ function HistoryItem({ title, timestamp }: HistoryItemProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDownload} disabled={!item.audioUrl}>
                     <DownloadIcon />
                     Download
                   </DropdownMenuItem>
@@ -136,16 +212,7 @@ function HistoryItem({ title, timestamp }: HistoryItemProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                toast.success("History item deleted", {
-                  description: `"${title}" has been removed.`,
-                  action: {
-                    label: "Undo",
-                    onClick: () => console.log("Undo delete history"),
-                  },
-                })
-                setShowDeleteDialog(false)
-              }}
+              onClick={handleDelete}
             >
               Delete
             </AlertDialogAction>

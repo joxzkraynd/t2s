@@ -64,7 +64,7 @@ export function Sidebar() {
     <CollapsibleContent asChild>
       <aside
         aria-label="Studio Settings"
-        className="w-80 shrink-0 border-l bg-background p-4 overflow-y-auto data-[state=closed]:hidden"
+        className="w-80 shrink-0 border-l bg-background p-4 overflow-y-auto data-[state=closed]:hidden max-md:hidden"
       >
         <FieldGroup>
           {/* Section 1: Settings (Model Selection) */}
